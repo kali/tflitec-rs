@@ -147,6 +147,18 @@ fn prepare_tensorflow_source(tf_src_path: &Path) {
         if !git.status().expect("Cannot execute `git clone`").success() {
             panic!("git clone failed");
         }
+        // "patching" spectrogram usage of uint32_t types
+        let spectrogram_h = tf_src_path.join("tensorflow/lite/kernels/internal/spectrogram.h");
+        std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(false)
+            .append(true)
+            .open(&spectrogram_h)
+            .unwrap()
+            .write("#include <cstdint>\n".as_bytes())
+            .unwrap();
+
         std::fs::File::create(complete_clone_hint_file).expect("Cannot create clone hint file!");
         println!("Clone took {:?}", Instant::now() - start);
     }
